@@ -14,7 +14,7 @@ describe('Configuration', () => {
   });
 
   describe('getConfig', () => {
-    it('should return the default configuration when no environment variables are set', () => {
+    it('Should return the default configuration when no environment variables are set', () => {
       const config = getConfig();
       expect(config).toBeDefined();
       expect(config.database).toBeDefined();
@@ -22,7 +22,7 @@ describe('Configuration', () => {
       expect(config.database.port).toBe(5432);
     });
 
-    it('should use environment variables when they are set', () => {
+    it('Should use environment variables when they are set', () => {
       process.env.DB_HOST = 'testhost';
       process.env.DB_PORT = '5433';
       process.env.DB_USERNAME = 'testuser';
@@ -42,7 +42,7 @@ describe('Configuration', () => {
   });
 
   describe('extendConfig', () => {
-    it('should extend the configuration with new values', () => {
+    it('Should extend the configuration with new values', () => {
       const initialConfig = getConfig();
       expect(Object.isFrozen(initialConfig)).toBe(false);
 
@@ -64,7 +64,7 @@ describe('Configuration', () => {
       );
     });
 
-    it('should not allow extending config after it has been frozen', () => {
+    it('Should not allow extending config after it has been frozen', () => {
       const initialConfig = getConfig();
       extendConfig({});
 
