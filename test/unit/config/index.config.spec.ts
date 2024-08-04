@@ -1,7 +1,7 @@
 import { getConfig, extendConfig } from '../../../src/config/index.config';
 import { ConfigInterface } from '../../../src/core/interfaces/config.interface';
 
-describe('Configuration', () => {
+describe('Unit - Configuration', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
