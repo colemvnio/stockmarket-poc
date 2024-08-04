@@ -1,0 +1,109 @@
+# .github/workflows/main.yml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.nvm.outputs.NVMRC }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+        id: nvm
+
+  install:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ needs.setup.outputs.node-version }}
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+      - name: Check node_modules
+        run: |
+          if [ ! -d "node_modules" ]; then
+            echo "node_modules directory is missing"
+            exit 1
+          fi
+
+  lint-and-test:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ needs.setup.outputs.node-version }}
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+      - name: Lint and Test
+        run: |
+          pnpm run lint --cache --cache-location node_modules/.cache/.eslintcache
+          pnpm run test --maxWorkers=2
+
+  build:
+    needs: [ lint-and-test ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ needs.setup.outputs.node-version }}
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm run build
